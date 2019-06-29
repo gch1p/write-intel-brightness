@@ -1,0 +1,1 @@
+# write-intel-brightness

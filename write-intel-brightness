@@ -1,0 +1,36 @@
+#!/bin/bash
+
+echoerr() {
+    >&2 echo "$@"
+}
+
+max=$(intel_reg read 0xC8254 2>/dev/null | awk '{print $3}')
+max=${max:2:4}
+max_dec=$(printf "%d" $((16#$max)))
+
+cur_br=$(cat /sys/class/backlight/intel_backlight/brightness)
+cur_per=$(($cur_br * 100 / $max_dec))
+
+case "$1" in
+    "+")
+        new_per=$(($cur_per+10))
+        ;;
+
+    "-")
+        new_per=$(($cur_per-10))
+        ;;
+    
+    *)
+        echoerr "command '$1' not supported"
+        exit 1
+        ;;
+esac
+
+if [ $new_per -lt 0 ]; then
+    new_per=0
+elif [ $new_per -gt 100 ]; then
+    new_per=100
+fi
+
+new_val=$(($new_per * $max_dec / 100))
+echo $new_val > /sys/class/backlight/intel_backlight/brightness
