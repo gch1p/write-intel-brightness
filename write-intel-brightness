@@ -1,8 +1,35 @@
 #!/bin/bash
 
+PROGNAME="$0"
+
 echoerr() {
-    >&2 echo "$@"
+    >&2 echo "error: $@"
 }
+
+die() {
+	echoerr "$@"
+	exit 1
+}
+
+usage() {
+	cat <<-_EOF
+	Usage: $PROGNAME +|-
+	_EOF
+	exit
+}
+
+command_exists() {
+	command -V "$1" >/dev/null 2>&1
+}
+
+[ -z "$1" ] && usage
+[ "$EUID" != 0 ] && die "must be run as root"
+
+for c in intel_reg awk; do
+	if ! command_exists $c; then
+		die "$c not found"
+	fi
+done
 
 max=$(intel_reg read 0xC8254 2>/dev/null | awk '{print $3}')
 max=${max:2:4}
